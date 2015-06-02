@@ -1,9 +1,11 @@
 package plantae.citrus.kumquatt.mqtt;
 
-import org.fusesource.mqtt.client.BlockingConnection;
-import org.fusesource.mqtt.client.MQTT;
+import org.apache.commons.lang3.StringUtils;
+import org.fusesource.mqtt.client.*;
 import plantae.citrus.kumquatt.MqttTracer;
 import plantae.citrus.kumquatt.mqtt.exception.NotConnectedException;
+
+import java.util.concurrent.TimeUnit;
 
 public class MqttManager {
     private volatile static MqttManager instance = null;
@@ -93,18 +95,66 @@ public class MqttManager {
     }
 
     public boolean publish(String topic, String message) throws NotConnectedException {
-//        if (mqttclient.blockingConnection().isConnected()) {
-//            try {
-//                mqttclient.blockingConnection().publish(topic, message.getBytes(), QoS.AT_LEAST_ONCE, false);
-//
-//            } catch (Exception e) {
-//                System.out.println(e.getMessage());
-//                return false;
-//            }
-//        } else {
-//            throw new NotConnectedException();
-//        }
-        return true;
+        if (connection.isConnected()){
+            try {
+                connection.publish(topic, message.getBytes(), QoS.AT_MOST_ONCE, false);
+                return true;
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                return false;
+            }
+        } else {
+            throw new NotConnectedException();
+
+        }
+    }
+
+    public boolean receiveOne(String topic, String payload) throws NotConnectedException {
+        if (connection.isConnected()){
+            try {
+
+                Message message = connection.receive(1, TimeUnit.SECONDS);
+                if (message != null) {
+                    String rTopic = message.getTopic();
+                    String rPayload = new String(message.getPayload());
+                    message.ack();
+
+                    System.out.print(String.format("You received topic(%s) message(%s) : ", rTopic, rPayload));
+                    if (StringUtils.equals(topic, rTopic) && StringUtils.equals(payload, rPayload)) {
+                        System.out.println("Good");
+                        return true;
+                    } else {
+                        System.out.println("NG");
+                        return false;
+                    }
+                } else {
+                    System.out.println("Nothing to receive");
+                    return false;
+                }
+
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                return false;
+            }
+        } else {
+            throw new NotConnectedException();
+        }
+    }
+
+    public boolean subscribe(String topic) throws NotConnectedException {
+        if (connection.isConnected()){
+            Topic[] topics = new Topic[1];
+            topics[0] = new Topic(topic, QoS.AT_MOST_ONCE);
+            try {
+                connection.subscribe(topics);
+                return true;
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                return false;
+            }
+        } else {
+            throw new NotConnectedException();
+        }
     }
 
     // Exception Not connected Yet

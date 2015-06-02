@@ -52,30 +52,36 @@ public class Shell {
                 ////
                 System.out.println("Running: " + command.getName() + " (" + command.getClass().getName() + ")");
                 String[] cmdArgs = Arrays.copyOfRange(arguments, 1, arguments.length);
-                CommandLine commandLine = parse(command, cmdArgs);
+                try {
+                    CommandLine commandLine = parse(command, cmdArgs);
 
-                if (commandLine != null) {
-                    try {
-                        command.execute(env, commandLine, reader);
-                    } catch (Throwable e) {
-                        System.out.println("Command failed with error: " + e.getMessage());
+                    if (commandLine != null) {
+                        try {
+                            command.execute(env, commandLine, reader);
+                        } catch (Throwable e) {
+                            System.out.println("Command failed with error: " + e.getMessage());
 
-                        Logger.logv(commandLine, e.getMessage());
+                            Logger.logv(commandLine, e.getMessage());
+                        }
                     }
+                } catch (ParseException ex){
+                    System.out.println(ex.getMessage());
                 }
+
 
             }
         }
     }
 
-    private CommandLine parse(Command cmd, String[] args) {
+    private CommandLine parse(Command cmd, String[] args) throws ParseException{
         Options opts = cmd.getOptions();
         CommandLine ret = null;
 
         try {
             ret = parser.parse(opts, args);
         } catch (ParseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            throw e;
         }
 
         return ret;

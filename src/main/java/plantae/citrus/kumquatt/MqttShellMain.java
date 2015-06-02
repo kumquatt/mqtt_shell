@@ -26,7 +26,10 @@ public class MqttShellMain {
             public void onEventReceived(Environment env, CommandLine cmd, ConsoleReader reader) throws Exception {
                 String host = "broker.mqtt-dashboard.com";
 
+                System.out.println(cmd.hasOption("c"));
+
                 String clientId = cmd.getOptionValue("c","");
+                System.out.println("!!!!! " + clientId);
                 if (StringUtils.isNotEmpty(clientId)){
                     System.out.println("w/ clientId");
                     MqttManager.getInstance().connect(host, 1883, clientId);
@@ -37,7 +40,7 @@ public class MqttShellMain {
             }
         });
 
-        connectCmd.addOption(new Option("c", "clientid", false, "client id name"));
+        connectCmd.addOption(new Option("c", "clientid", true, "client id name"));
 
 
         CustomCmd disconnectCmd = new CustomCmd("disconnect", new CustomCmdHandler() {
@@ -46,11 +49,59 @@ public class MqttShellMain {
             }
         });
 
+        CustomCmd subscribeCmd = new CustomCmd("subscribe", new CustomCmdHandler() {
+            public void onEventReceived(Environment env, CommandLine cmd, ConsoleReader reader) throws Exception {
+                String topic = cmd.getOptionValue("topic");
+                System.out.println("Subscribe " + topic);
+                MqttManager.getInstance().subscribe(topic);
+            }
+        });
+
+        Option topic = new Option("t", "topic", true, "topic name");
+        topic.setRequired(true);
+        Option message = new Option("m", "message", true, "message");
+        message.setRequired(true);
+
+        subscribeCmd.addOption(topic);
+
+        CustomCmd publishCmd = new CustomCmd("publish", new CustomCmdHandler() {
+            public void onEventReceived(Environment env, CommandLine cmd, ConsoleReader reader) throws Exception {
+                String topic = cmd.getOptionValue("topic");
+                String message = cmd.getOptionValue("message");
+                MqttManager.getInstance().publish(topic, message);
+            }
+        });
+
+        publishCmd.addOption(topic);
+        publishCmd.addOption(message);
+
+        CustomCmd receiveOneCmd = new CustomCmd("receive", new CustomCmdHandler() {
+            public void onEventReceived(Environment env, CommandLine cmd, ConsoleReader reader) throws Exception {
+                String topic = cmd.getOptionValue("topic");
+                String message = cmd.getOptionValue("message");
+                if (MqttManager.getInstance().receiveOne(topic, message)){
+                    System.out.println("GOOD");
+                } else {
+                    System.out.println("NOGOOD");
+                }
+            }
+        });
+        receiveOneCmd.addOption(topic);
+        receiveOneCmd.addOption(message);
+
         HelpCmd helpCmd = new HelpCmd("help");
         ExitCmd exitCmd = new ExitCmd("exit");
 
         try {
-            ShellTemplate.custom().setShellName("hi").addCommand(connectCmd).addCommand(helpCmd).addCommand(exitCmd).addCommand(disconnectCmd).build().run();
+            ShellTemplate.custom().setShellName("hi")
+                    .addCommand(connectCmd)
+                    .addCommand(helpCmd)
+                    .addCommand(exitCmd)
+                    .addCommand(disconnectCmd)
+                    .addCommand(subscribeCmd)
+                    .addCommand(publishCmd)
+                    .addCommand(receiveOneCmd)
+                    .build().run();
         } catch (Exception e) {
             System.out.println("exception??? " + e.getMessage());
         }
