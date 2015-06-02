@@ -14,24 +14,18 @@ import org.apache.commons.cli.Options;
 public class HelpCmd implements Command {
     private String name;
     private Completer completer = new NullCompleter();
+    private boolean firstFlag = true;
 
-    private Environment env;
-
-    public HelpCmd(String name, Environment env) {
+    public HelpCmd(String name) {
         this.name = name;
-        this.env = env;
-
-        this.completer = new AggregateCompleter(
-                new StringsCompleter(this.env.commandList()),
-                new NullCompleter());
     }
 
     public String getHelpHeader() {
-        return "Options:";
+        return "Show every commands or usage of a command";
     }
 
     public String getUsage() {
-        return getName() + " [OPTION ...][ARGS ...]";
+        return getName() + " [-v] [CommandName]";
     }
 
     public String getName() {
@@ -49,10 +43,18 @@ public class HelpCmd implements Command {
     }
 
     public void execute(Environment env, CommandLine cmd, ConsoleReader reader) {
+        if (firstFlag){
+            this.completer = new AggregateCompleter(
+                    new StringsCompleter(env.commandList()),
+                    new NullCompleter());
+        }
+
         if (cmd.getArgs().length == 0) {
+            int idx = 0;
             for (String str : env.commandList()) {
-                Logger.log(cmd, str);
+                Logger.log(cmd, String.format("%d : %s", ++idx, str));
             }
+
         } else {
             Command command = env.getCommand(cmd.getArgs()[0]);
             Logger.logv(cmd, "Get Help for command: " + command.getName() + "(" + command.getClass().getName() + ")");

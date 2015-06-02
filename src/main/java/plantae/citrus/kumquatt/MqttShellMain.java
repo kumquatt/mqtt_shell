@@ -5,7 +5,9 @@ import org.apache.commons.cli.CommandLine;
 import plantae.citrus.kumquatt.mqtt.ConnectionManager;
 import plantae.citrus.kumquatt.shell.ShellTemplate;
 import plantae.citrus.kumquatt.shell.commands.CustomCmd;
+import plantae.citrus.kumquatt.shell.commands.CustomCmdHandler;
 import plantae.citrus.kumquatt.shell.commands.ExitCmd;
+import plantae.citrus.kumquatt.shell.commands.HelpCmd;
 
 import java.io.IOException;
 
@@ -17,15 +19,17 @@ public class MqttShellMain {
 
         System.out.println(ConnectionManager.getInstance().isConnected());
 
-        CustomCmd connectCmd = new CustomCmd("connect", new CustomCmd.ActorHandler() {
-            public void onEventReveived(CommandLine cmd, ConsoleReader reader) throws Exception {
+        CustomCmd connectCmd = new CustomCmd("connect", new CustomCmdHandler() {
+            public void onEventReceived(CommandLine cmd, ConsoleReader reader) throws Exception {
                 ConnectionManager.getInstance().connect("localhost", 1883);
             }
         });
+        HelpCmd helpCmd = new HelpCmd("help");
+        ExitCmd exitCmd = new ExitCmd("exit");
 
 
         try {
-            ShellTemplate.custom().setShellName("hi").addCommand(new ExitCmd("exit")).addCommand(connectCmd).build().run();
+            ShellTemplate.custom().setShellName("hi").addCommand(connectCmd).addCommand(helpCmd).addCommand(exitCmd).build().run();
         } catch (Exception e) {
             System.out.println("exception??? " + e.getMessage());
         }

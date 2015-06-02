@@ -7,10 +7,10 @@ import jline.console.completer.Completer;
 import jline.console.completer.StringsCompleter;
 import jline.console.history.FileHistory;
 import jline.console.history.History;
-import plantae.citrus.kumquatt.shell.commands.Command;
-import plantae.citrus.kumquatt.shell.utils.Logger;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
+import plantae.citrus.kumquatt.shell.commands.Command;
+import plantae.citrus.kumquatt.shell.utils.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +24,7 @@ public class Shell {
     private final String name;
     private final Set<Command> commands;
 
-    public Shell(String name, Set<Command> commands){
+    public Shell(String name, Set<Command> commands) {
         this.name = name;
         this.commands = commands;
     }
@@ -33,7 +33,7 @@ public class Shell {
     public void run() throws Exception {
         initialize(env);
 
-        if (StringUtils.isEmpty(env.getPrompt())){
+        if (StringUtils.isEmpty(env.getPrompt())) {
             env.setPrompt(getName() + "$");
         }
 
@@ -43,31 +43,32 @@ public class Shell {
 
         String line;
 
-        while((line = reader.readLine(this.env.getPrompt() + " " )) != null){
+        while ((line = reader.readLine(env.getPrompt() + " ")) != null) {
             String[] arguments = line.split("\\s");
             String commandName = arguments[0];
 
             Command command = env.getCommand(commandName);
-            if (command != null){
+            if (command != null) {
                 ////
                 System.out.println("Running: " + command.getName() + " (" + command.getClass().getName() + ")");
                 String[] cmdArgs = Arrays.copyOfRange(arguments, 1, arguments.length);
                 CommandLine commandLine = parse(command, cmdArgs);
 
-                if (commandLine != null){
+                if (commandLine != null) {
                     try {
                         command.execute(env, commandLine, reader);
-                    } catch (Throwable e){
+                    } catch (Throwable e) {
                         System.out.println("Command failed with error: " + e.getMessage());
 
                         Logger.logv(commandLine, e.getMessage());
                     }
                 }
+
             }
         }
     }
 
-    private CommandLine parse(Command cmd, String[] args){
+    private CommandLine parse(Command cmd, String[] args) {
         Options opts = cmd.getOptions();
         CommandLine ret = null;
 
@@ -80,9 +81,9 @@ public class Shell {
         return ret;
     }
 
-    private Completer initCompleters(Environment env){
+    private Completer initCompleters(Environment env) {
         ArrayList<Completer> completers = new ArrayList<Completer>();
-        for (String cmdName : env.commandList()){
+        for (String cmdName : env.commandList()) {
             StringsCompleter sc = new StringsCompleter(cmdName);
             ArrayList<Completer> cmdCompleters = new ArrayList<Completer>();
             cmdCompleters.add(sc);
@@ -101,15 +102,15 @@ public class Shell {
         File dir = new File(System.getProperty("user.home"), "."
                 + this.getName());
 
-        if (dir.exists() && dir.isFile()){
+        if (dir.exists() && dir.isFile()) {
             throw new IllegalStateException("Default configuration file exists and is not a directory: " + dir.getAbsolutePath());
-        } else if (!dir.exists()){
+        } else if (!dir.exists()) {
             dir.mkdir();
         }
 
         File histFile = new File(dir, "history");
-        if (!histFile.exists()){
-            if (!histFile.createNewFile()){
+        if (!histFile.exists()) {
+            if (!histFile.createNewFile()) {
                 throw new IllegalStateException("Unable to create history file: " + histFile.getAbsolutePath());
             }
         }
@@ -131,13 +132,13 @@ public class Shell {
         return hist;
     }
 
-    public void initialize(Environment env) throws Exception{
-        for(Command cmd : commands){
+    public void initialize(Environment env) throws Exception {
+        for (Command cmd : commands) {
             env.addCommand(cmd);
         }
     }
 
-    public String getName(){
+    public String getName() {
         return this.name;
     }
 
